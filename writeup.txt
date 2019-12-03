@@ -1,0 +1,13 @@
+Decision Tree details 
+build a dataframe with each features values, use that in decision tree evaluation 
+
+
+
+Features:- 
+Average word length 
+most popular letter (in english): True / False
+most popular letter (in dutch): True / False 
+double letters : 1, 2, >=3
+hyphenated words : True/False
+# of consonant clusters : (https://www.listenandlearnusa.com/blog/9-surprising-facts-about-the-dutch-language/)
+is there a word present with > 7 letters ? 
