@@ -17,12 +17,15 @@ class Tree():
         #print(self.tree)
 
     def build_stump(self, df, sample_weight):
-        self.tree = b.build_decision_stump(df, df, df.columns.values[-1], 'language', sample_weight)
+        self.tree = b.build_decision_stump(df, df, df.columns.values[:-1], 'language', sample_weight)
+        #print(self.tree)
 
     def show_tree(self):
         print(tree)
 
-    def predict(self, query, tr, default = 1):
+    def predict(self, query, tr = None, default = 1):
+        if tr == None:
+            tr = self.tree
         for key in list(query.keys()):
             if key in list(tr.keys()):
                 #2.

@@ -3,6 +3,9 @@ import sys
 import subprocess
 from collections import Counter
 import pandas as pd 
+import boosting as boost 
+from sklearn.utils import shuffle
+import pickle
 
 features = ['nl_bigrams', 'en_bigrams', 'hyphenated', 'double_letters', 'double_consonants', \
             'no_of_vowels', 'has_long_words', 'has_short_words', 'has_f', 'has_y', 'language']
@@ -126,22 +129,47 @@ def read_data(data_filename, df):
             df = df.append(entry, ignore_index = True)
     return df
 
-def main(*argv):
-    df = pd.DataFrame(columns=features)
-    df = read_data('data.txt', df)
-    #Write out decision tree 
-    tree_obj = dt.Tree(features[:-1], 'language')
-    tree_obj.build(df)
-    with open('train.dat', 'r', encoding='utf8') as fp:
-        for line in fp:
-            s = line.split('|')
-            q = build_features(s[1], s[0])
-            #print(s[1], s[0], '\n')
-            if q.get('language') : del q['language']
-            #print(q)
-            print(tree_obj.predict(q, tree_obj.tree) == s[0])
-    #tree_obj.show_tree()
+
+def main():
+    argv = sys.argv
+    try:
+        if argv[1] == 'train':
+            print('\nReading in the data...')
+            df = pd.DataFrame(columns=features)
+            df = read_data(argv[2], df)
+            df = shuffle(df)
+
+            if argv[4] == 'dt':   
+                print('Training Decision Tree Model...') 
+                tree_obj = dt.Tree(features[:-1], 'language')
+                tree_obj.build(df)
+                print('Writing model to ', argv[3], '...')
+                with open(argv[3], 'wb') as handle:
+                    pickle.dump(tree_obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            elif argv[4] == 'ada':
+                df = df.drop('has_y', 1)
+                print('Training Adaboost Model...') 
+                #for i in range(20):
+                model = boost.Boosting(df, 30)
+                model.fit()
+                acc = 0
+                print('Writing model to ', argv[3], '...')
+                with open(argv[3], 'wb') as handle:
+                    pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)  
+        elif argv[1] == 'predict':
+            pickle_in = open(argv[2], 'rb')
+            model = pickle.load(pickle_in)
+            with open(argv[3], 'r', encoding='utf8') as fp:
+                for line in fp:
+                    s = line.split('|')
+                    q = build_features(s[1], s[0])
+                    #print(s[1], s[0], '\n')
+                    if q.get('language') : del q['language']
+                    #print(q)
+                    print('Language: ', model.predict(q))
+    except:
+        print(MESSAGE_ERR_ARGS)
     
 if __name__ == '__main__':
-    #subprocess.call('pip install -r requirements.txt')
-    main(sys.argv)
+    subprocess.call('pip install -r requirements.txt')
+    main()
